@@ -7,6 +7,7 @@
 
 package top.limbang
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -67,6 +68,7 @@ object Messaging : KotlinPlugin(
                 val messagingServerList = messagingServerList.filter { it.groupId == group.id}
                 messagingServerList.forEach {
                     it.handler(group)
+                    delay(200)
                 }
             }
 
