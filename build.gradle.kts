@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "top.limbang"
-version = "0.1.2"
+version = "0.1.3"
 
 
 repositories {
@@ -18,5 +18,6 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    compileOnly("top.limbang:mirai-plugin-general-interface:1.0.2")
     testImplementation(kotlin("test"))
 }

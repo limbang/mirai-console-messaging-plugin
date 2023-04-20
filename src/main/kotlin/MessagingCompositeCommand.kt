@@ -10,10 +10,14 @@ package top.limbang
 
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.UserCommandSender
+import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.event.broadcast
+import top.limbang.Messaging.isLoadGeneralPluginInterface
 import top.limbang.MessagingData.messagingServerList
 import top.limbang.entity.MessagingServer
+import top.limbang.mirai.event.GroupRenameEvent
 
 object MessagingCompositeCommand : CompositeCommand(Messaging, "msg") {
 
@@ -30,7 +34,7 @@ object MessagingCompositeCommand : CompositeCommand(Messaging, "msg") {
         val url = if (enableSecure) "wss://$address${if (port == 443) "" else ":$port"}"
         else "ws://$address${if (port == 80) "" else ":$port"}"
         val messagingServer = messagingServerList.find { it.name == name }
-        if(messagingServer == null)
+        if (messagingServer == null)
             messagingServerList.add(MessagingServer(groupId = subject.id, name = name, url = url))
         else
             messagingServer.url = url
@@ -41,14 +45,24 @@ object MessagingCompositeCommand : CompositeCommand(Messaging, "msg") {
     @Description("改名服务器")
     suspend fun UserCommandSender.rename(@Name("名称") name: String, @Name("新名称") newName: String) {
         if (isNotGroup()) return
-        val messagingServer = messagingServerList.find { it.groupId == subject.id && it.name == name }
-        if (messagingServer != null) {
-            messagingServer.name = newName
-            sendMessage("原[$name]改为[$newName]成功")
-        } else {
-            sendMessage("未找到[$name]服务器")
-        }
+        if (renameInstance(name, newName, subject.id, false)) sendMessage("原[$name]改为[$newName]成功")
+        else sendMessage("未找到[$name]服务器")
+    }
 
+    internal suspend fun renameInstance(name: String, newName: String, groupID: Long, isEvent: Boolean): Boolean {
+        val messagingServer = messagingServerList.find { it.groupId == groupID && it.name == name }
+        return if (messagingServer != null) {
+            messagingServer.name = newName
+
+            if (isLoadGeneralPluginInterface) {
+                // 发布改名广播
+                // 不是事件就发布改名广播
+                if (!isEvent) GroupRenameEvent(groupID, Messaging.id, name, newName).broadcast()
+            }
+            true
+        } else {
+            false
+        }
     }
 
     @SubCommand
